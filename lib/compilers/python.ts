@@ -47,32 +47,9 @@ export class PythonCompiler extends BaseCompiler {
     }
 
     override processAsm(result) {
-        const lineRe = /^\s{0,4}(\d+)(.*)/;
-
-        const bytecodeLines = result.asm.split('\n');
-
-        const bytecodeResult: ParsedAsmResultLine[] = [];
-        let lastLineNo: number | undefined;
-        let sourceLoc: AsmResultSource | null = null;
-
-        for (const line of bytecodeLines) {
-            const match = line.match(lineRe);
-
-            if (match) {
-                const lineno = parseInt(match[1]);
-                sourceLoc = {line: lineno, file: null};
-                lastLineNo = lineno;
-            } else if (line) {
-                sourceLoc = {line: lastLineNo, file: null};
-            } else {
-                sourceLoc = {line: undefined, file: null};
-                lastLineNo = undefined;
-            }
-
-            bytecodeResult.push({text: line, source: sourceLoc});
-        }
-
-        return {asm: bytecodeResult};
+        const output = result.asm.trim();
+        const outputResult: ParsedAsmResultLine[] = [{text: output, source: {line: undefined, file: null}}];
+        return {asm: outputResult};
     }
 
     override optionsForFilter(filters: ParseFiltersAndOutputOptions, outputFilename: string) {

@@ -28,6 +28,7 @@ import sys
 import dis
 import argparse
 import traceback
+import subprocess
 
 from dis import dis, disassemble, distb, _have_code, _disassemble_bytes, _try_compile
 
@@ -41,6 +42,16 @@ parser.add_argument('-O', action='store_true', dest='optimize_1',
                     help="Enable Python's -O optimization flag (remove assert and __debug__-dependent statements)")
 parser.add_argument('-OO', action='store_true', dest='optimize_2',
                     help="Enable Python's -OO optimization flag (do -O changes and also discard docstrings)")
+
+
+import importlib
+
+def check_package(package_name):
+    try:
+        importlib.import_module(package_name)
+    except ImportError:
+        print(f"The {package_name} package is required but not installed. Please install it using 'pip install {package_name}'.")
+        sys.exit(1)
 
 
 def _disassemble_recursive(co, depth=None):
@@ -108,6 +119,8 @@ def dis37(x=None, depth=None):
 
 
 if __name__ == '__main__':
+    check_package("numpy")
+    check_package("torch")
     args = parser.parse_args()
 
     if not args.inputfile:
@@ -135,9 +148,14 @@ if __name__ == '__main__':
     if args.outputfile:
         sys.stdout = open(args.outputfile, 'w', encoding='utf8')
 
-    if sys.version_info < (3, 7):
-        # Any Python version older than 3.7 doesn't support recursive diassembly,
-        # so we call our own function
-        dis37(code)
-    else:
-        dis(code)
+    import io
+    from contextlib import redirect_stdout
+    
+    def capture_output(code_obj):
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            exec(code_obj)
+        return buffer.getvalue()
+
+    output = capture_output(code)
+    print(output)
